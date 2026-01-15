@@ -34,6 +34,26 @@ export class Bookmark {
   userId: string;
 
   @ApiProperty({
+    description: 'Optional description or notes about the bookmark',
+    example: 'Saved for later reading about TypeScript best practices',
+    required: false,
+    nullable: true,
+    maxLength: 1000,
+  })
+  @Column({ type: 'varchar', length: 1000, nullable: true })
+  description: string | null;
+
+  @ApiProperty({
+    description: 'Title about the bookmark',
+    example: 'Foodie',
+    required: true,
+    nullable: false,
+    maxLength: 255,
+  })
+  @Column({ type: 'varchar', length: 255 })
+  title: string;
+
+  @ApiProperty({
     description: 'Timestamp when the bookmark was created',
     example: '2025-01-15T10:30:00.000Z',
   })
