@@ -1,0 +1,60 @@
+services:
+  # PostgreSQL Database (development)
+  db:
+    image: postgres:15-alpine
+    container_name: bookmark-db-dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - bookmark-network-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS Application (development with hot reload)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: bookmark-app-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      DB_HOST: db  # Override to use Docker service name
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./test:/app/test
+      # Exclude node_modules from mount
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bookmark-network-dev
+    command: pnpm run start:dev
+
+volumes:
+  postgres_data_dev:
+    driver: local
+
+networks:
+  bookmark-network-dev:
+    driver: bridge
